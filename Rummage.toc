@@ -18,10 +18,12 @@ Tooltip.lua
 Categories/Stats.lua
 Categories/Food.lua
 Categories/Drink.lua
+Categories/FoodDrink.lua
 Categories/Potions.lua
 Categories/Flask.lua
 Categories/Scroll.lua
 Categories/Bandage.lua
 Categories/Quest.lua
 Window.lua
+Bar.lua
 Settings.lua

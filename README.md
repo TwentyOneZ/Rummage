@@ -11,6 +11,7 @@ Built for **World of Warcraft: Forever** (Interface 16001). It only uses standar
 | `food` | SmartFood | Buff food by your stat priority, read from the Well Fed text |
 | `plainfood` | SmartPlainFood | Food without a buff that restores the most health |
 | `drink` | SmartDrink | The drink (water, juice, conjured water) that restores the most mana |
+| `fooddrink` | SmartFoodDrink | Off by default. The SmartPlainFood and SmartDrink picks in one macro |
 | `flask` | SmartFlask | Flasks and elixirs by your stat priority |
 | `scroll` | SmartScroll | Stat scrolls by your stat priority, used on yourself |
 | `healthpotion` | SmartHealthPotion | The potion that restores the most health |
@@ -41,7 +42,7 @@ Pick your preferred buff in the `/rum` window, or set the whole order by command
 /rummage food any
 ```
 
-Words accepted: `stamina sta stam spirit spi strength str agility agi intellect int haste crit critical mastery mast versatility vers hit expertise exp ap attackpower sp spellpower armor mp5 health mana`.
+Words accepted: `stamina sta stam spirit spi strength str agility agi intellect int haste crit critical mastery mast versatility vers hit expertise exp ap attackpower sp spellpower healing heal armor mp5 hp5 health mana`.
 
 ### Flasks and elixirs
 
@@ -53,7 +54,7 @@ Same priority mechanism as food, with its own list (`/rummage flask str agi int`
 | Rogue, Hunter | Agility, Attack Power |
 | Mage | Spell Power, Spirit, Intellect |
 | Warlock | Spell Power, Stamina, Intellect |
-| Priest, and Holy/Restoration/Balance/Elemental hybrids | Spell Power, Intellect/MP5, Spirit |
+| Priest, and Holy/Restoration/Balance/Elemental hybrids | Spell Power, Healing, Intellect/MP5, Spirit |
 
 Hybrids without a talent tree yet get a mixed list (druids lead with casting). Stamina, Health and Armor are always on the list as a last resort. Elixirs that only give stats your class gets nothing from (Strength or Agility on a mage, Intellect or Spirit on a rogue) are skipped instead of wasted, and show as "no use to your class". Add the stat to your priority if you want them used anyway. Battle and guardian elixirs are not told apart yet: the macro uses the single best match, so keep the other elixir type on a separate slot if you use both.
 
@@ -64,6 +65,10 @@ SmartScroll picks among stat scrolls (Stamina, Intellect, Spirit, Strength, Agil
 ### Drinks
 
 SmartDrink uses whatever you sit down and drink that restores the most mana: water, juice, conjured water, and food that restores mana as well. Mana potions are not drinks and stay on SmartManaPotion. No priority to set.
+
+### Food and drink in one slot
+
+Short on action slots? **SmartFoodDrink** eats your plain food and drinks your drink in one click (food and drink are off the global cooldown, so both go through). It uses the same items SmartPlainFood and SmartDrink would, and only one of them when you carry just food or just drink. It is off by default: tick it in the `/rum` window or settings, or type `/rummage fooddrink on`. Turning it on turns off the separate SmartPlainFood and SmartDrink macros; turning it off turns them back on.
 
 ### Potions and bandages
 
@@ -78,6 +83,23 @@ No priority to set; the strongest item wins. Potions that restore both health an
 - for food, flasks and scrolls, two dropdowns: **Preferred buff** (the stat you want, for example Haste) and **If none, then** (the fallback when you carry no food with it). "Any (strongest)" ranks purely by amount. The full order is shown next to them; **Default** restores the built-in list.
 
 Press Escape or **Close** to hide it.
+
+## The bar
+
+Next to the macros, Rummage can show its own bar: one button per category you carry something for, each using that category's current pick (the same item its Smart macro uses). Buttons appear and disappear as your bags change, so the bar only ever holds what you can actually use. Each button shows the item's count and cooldown, dims when it cannot be used, and its tooltip is the item's tooltip plus how many other candidates you carry. Disabled categories are left off.
+
+It is on by default. While unlocked it has a dark background and a small blue handle at its top-left corner: drag the handle to move it, then lock it. Options are in the settings page and under `/rum bar`:
+
+```
+/rummage bar                     show or hide the bar
+/rummage bar lock|unlock         lock it, or show the drag handle
+/rummage bar vertical|horizontal change its direction
+/rummage bar empty               also show categories with nothing in your bags
+/rummage bar scale 1.2           resize it (0.5 to 2)
+/rummage bar reset               move it back to the default spot
+```
+
+Like the macros, the bar can only change outside combat: an item you run out of mid-fight stays on its (dimmed) button until the fight ends, and the bar cannot be moved or reconfigured in combat.
 
 ## Settings page
 
