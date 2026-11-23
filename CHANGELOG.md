@@ -1,6 +1,6 @@
 # Rummage changelog
 
-## Unreleased
+## 0.5.0 — Rummage bar
 
 - **SmartScroll** (#1): stat scrolls (Stamina, Intellect, Spirit, Strength, Agility, Protection) by your stat priority, with the same class and talent defaults as flasks. The highest rank wins, scrolls your class gets nothing from are skipped, and the macro always uses the scroll on yourself.
 - "Any (strongest)" now really means any: scrolls and elixirs your class gets nothing from are no longer skipped when that is your first choice.
