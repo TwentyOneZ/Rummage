@@ -38,6 +38,7 @@ local LANGUAGES = {
             { "índice de acerto crítico", "critical strike rating" },
             { "chance de acerto crítico", "critical strike" },
             { "acerto crítico", "critical strike" },
+            { "chance de acerto", "hit chance" },
             { "índice de acerto", "hit rating" },
             { "índice de aceleração", "haste rating" },
             { "aceleração", "haste" },
@@ -54,8 +55,17 @@ local LANGUAGES = {
             { "poder de ataque", "attack power" },
             { "poder mágico", "spell power" },
             { "dano causado por efeitos e feitiços mágicos", "spell damage" },
-            { "dano de fogo de feitiços", "spell damage" },
+            { "dano de fogo de feitiços", "fire spell damage" }, -- one school: not spell power
+            { "dano mágico de sombra", "shadow spell damage" },
+            { "dano mágico de fogo", "fire spell damage" },
+            { "dano mágico de gelo", "frost spell damage" },
+            { "dano mágico de arcano", "arcane spell damage" },
+            { "dano mágico de natureza", "nature spell damage" },
+            { "dano mágico de sagrado", "holy spell damage" },
             { "dano mágico", "spell damage" },
+            { "cura realizada por feitiços e efeitos mágicos", "healing" },
+            { "cura feita por feitiços e efeitos mágicos", "healing" },
+            { "poder de cura", "healing power" },
             { "todos os atributos", "of all stats" },
 
             -- Health and mana.

@@ -103,16 +103,25 @@ end
 function Rummage.IsCategoryEnabled(key)
     local saved = RummageCharDB and RummageCharDB.enabled[key]
     if saved == nil then
-        return true
+        local category = categories[key]
+        return not category or category.defaultEnabled ~= false
     end
     return saved
 end
 
+-- A combining category (SmartFoodDrink) replaces the macros it combines:
+-- turning it on turns them off, and turning it off turns them back on.
 function Rummage.SetCategoryEnabled(key, enabled)
-    if not categories[key] then
+    local category = categories[key]
+    if not category then
         return
     end
     RummageCharDB.enabled[key] = enabled and true or false
+    for _, part in ipairs(category.combines or {}) do
+        if categories[part] then
+            RummageCharDB.enabled[part] = not enabled
+        end
+    end
     Rummage.RequestScan()
 end
 
@@ -136,6 +145,11 @@ end
 -- Categories without statAliases have no priority; they rank on their own.
 --   Prepare() -> called once before each bag scan (optional)
 --   events           { "QUEST_LOG_UPDATE", ... } extra events that trigger a scan
+--   defaultEnabled   false to start with the macro off (optional)
+-- A combining category scans nothing itself and builds its pick from other
+-- categories' picks instead of Prefilter/Classify/Rank:
+--   combines         { "plainfood", "drink" }, registered before it
+--   Combine(picks)   -> candidate or nil; picks is key -> pick for combines
 local eventFrame = CreateFrame("Frame")
 
 function Rummage.RegisterCategory(category)
@@ -213,17 +227,37 @@ local function LastBagIndex()
     return NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
 end
 
--- Walks the bags once and hands every item to every enabled category.
--- Each category's Prefilter keeps the tooltip work down to the classes it
--- cares about.
+-- A category is scanned when its macro is on, or when an enabled combining
+-- category needs its pick.
+local function NeedsScan(key)
+    if categories[key].combines then
+        return false
+    end
+    if Rummage.IsCategoryEnabled(key) then
+        return true
+    end
+    for _, other in ipairs(categoryOrder) do
+        local category = categories[other]
+        if category.combines and tContains(category.combines, key) and Rummage.IsCategoryEnabled(other) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Walks the bags once and hands every item to every category that needs a
+-- pick. Each category's Prefilter keeps the tooltip work down to the classes
+-- it cares about.
 local function ScanBags()
     local playerLevel = UnitLevel("player") or 1
     waitingForItemInfo = false
     local found = {}          -- key -> { [itemID] = candidate }
+    local scanned = {}        -- key -> true
     for _, key in ipairs(categoryOrder) do
         found[key] = {}
+        scanned[key] = NeedsScan(key)
         local category = categories[key]
-        if category.Prepare and Rummage.IsCategoryEnabled(key) then
+        if category.Prepare and scanned[key] then
             category.Prepare()
         end
     end
@@ -237,7 +271,7 @@ local function ScanBags()
                     local lines
                     for _, key in ipairs(categoryOrder) do
                         local category = categories[key]
-                        if Rummage.IsCategoryEnabled(key)
+                        if scanned[key]
                             and (not category.Prefilter or category.Prefilter(itemID, classID, subclassID)) then
                             local existing = found[key][itemID]
                             if existing then
@@ -269,20 +303,29 @@ local function ScanBags()
     end
 
     for _, key in ipairs(categoryOrder) do
+        local category = categories[key]
         local list = {}
-        for _, candidate in pairs(found[key]) do
-            list[#list + 1] = candidate
-        end
-        categories[key].Rank(list, Rummage.GetPriority(key))
-        Rummage.candidates[key] = list
-
         local best
-        for _, candidate in ipairs(list) do
-            if candidate.usable then
-                best = candidate
-                break
+        if category.combines then
+            local picks = {}
+            for _, part in ipairs(category.combines) do
+                picks[part] = Rummage.currentPick[part]
+            end
+            best = category.Combine(picks)
+            list[1] = best
+        else
+            for _, candidate in pairs(found[key]) do
+                list[#list + 1] = candidate
+            end
+            category.Rank(list, Rummage.GetPriority(key))
+            for _, candidate in ipairs(list) do
+                if candidate.usable then
+                    best = candidate
+                    break
+                end
             end
         end
+        Rummage.candidates[key] = list
         Rummage.currentPick[key] = best
         Debug("%s: %d candidate(s), pick %s", key, #list, best and (best.link or best.itemID) or "none")
     end
@@ -303,6 +346,7 @@ local function MacroBody(category, pick)
     end
     return string.format("#showtooltip\n/run Rummage.Print(\"No %s in your bags.\")", category.label:lower())
 end
+Rummage.MacroBody = MacroBody   -- the bar runs the same text
 
 local function EnsureMacro(category, body)
     local index = GetMacroIndexByName(category.macroName)
@@ -370,6 +414,9 @@ local function RunScan()
     end
     if ns.window and ns.window.Refresh then
         ns.window.Refresh()
+    end
+    if ns.bar and ns.bar.Refresh then
+        ns.bar.Refresh()
     end
 end
 
@@ -450,6 +497,7 @@ local function PrintHelp()
     print("  /rummage <category> <stat> <stat> ...  - set the stat priority for this character")
     print("  /rummage <category> on|off  - enable or disable that macro")
     print("  /rummage pickup <category>  - put the macro on the cursor to drop on a slot")
+    print("  /rummage bar  - show or hide the Rummage bar (/rummage bar help for more)")
     print("  /rummage scan  - rescan bags now")
     print("  /rummage debug  - toggle debug output")
     local keys = {}
@@ -484,6 +532,11 @@ local function HandleSlash(input)
     elseif command == "config" or command == "options" or command == "settings" then
         if ns.settings and ns.settings.Open then
             ns.settings.Open()
+        end
+        return
+    elseif command == "bar" then
+        if ns.bar and ns.bar.HandleSlash then
+            ns.bar.HandleSlash(rest)
         end
         return
     elseif command == "scan" then
@@ -553,6 +606,13 @@ local function HandleSlash(input)
     if lower == "on" or lower == "off" then
         Rummage.SetCategoryEnabled(command, lower == "on")
         Print("%s macro %s", category.label, lower == "on" and "enabled" or "disabled")
+        if category.combines then
+            local names = {}
+            for _, part in ipairs(category.combines) do
+                names[#names + 1] = Rummage.GetCategory(part).macroName
+            end
+            Print("%s %s", table.concat(names, " and "), lower == "on" and "turned off" or "turned back on")
+        end
         return
     elseif lower == "" then
         PrintStatus(command)

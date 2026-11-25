@@ -20,7 +20,7 @@ local ITEMS = {
     { id = 104, sub = 5, expect = "drink=1992",
       en = { "Moonberry Juice", "Use: Restores 1992 mana over 30 sec. Must remain seated while drinking." },
       pt = { "Suco de Lunamora", "Uso: Recupera 1992 de mana ao longo de 30 s. É preciso ficar sentado enquanto bebe." } },
-    { id = 105, sub = 5, expect = "drink=4410",
+    { id = 105, sub = 5, expect = "food{SPIRIT:10} drink=4410",
       en = { "Blessed Sunfruit Juice", "Use: Restores 4410 mana over 30 sec. Must remain seated while drinking. Also increases your Spirit by 10 for 10 min." },
       pt = { "Suco de Frutassol Abençoada", "Uso: Restaura 4410 pontos de mana ao longo de 30 s. É preciso permanecer sentado enquanto bebe. Também aumenta em 10 o Espírito por 10 min." } },
     { id = 106, sub = 5, expect = "plainfood=243",
@@ -47,7 +47,7 @@ local ITEMS = {
     { id = 113, sub = 2, expect = "flask{AGILITY:25,CRIT:2}",
       en = { "Elixir of the Mongoose", "Use: Increases Agility by 25 and chance to get a critical hit by 2% for 1 hour. (3 Sec Cooldown)" },
       pt = { "Elixir do Mangusto", "Uso: Aumenta em 25 a Agilidade e em 2% a chance de acerto crítico por 1 hora. (3 Seg Recarga)" } },
-    { id = 114, sub = 2, expect = "flask{SP:40}",
+    { id = 114, sub = 2, expect = "", -- one school is not spell power
       en = { "Elixir of Shadow Power", "Use: Increases spell shadow damage by up to 40 for 30 min. (3 Sec Cooldown)" },
       pt = { "Elixir de Poder Sombrio", "Uso: Aumenta em até 40 o dano mágico de Sombra por 30 min. (3 Seg Recarga)" } },
     { id = 115, sub = 2, expect = "flask{MP5:12}",

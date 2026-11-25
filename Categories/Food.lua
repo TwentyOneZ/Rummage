@@ -20,8 +20,10 @@ local OVERRIDES = {
 
 local IGNORE = { HEALTH = true, MANA = true }
 
+-- Well Fed, or a buff without that wording (Blessed Sunfruit: "Also
+-- increases your Strength by 10").
 local function IsWellFed(text)
-    return text:find("well fed", 1, true) ~= nil
+    return text:find("well fed", 1, true) ~= nil or text:find("also increases your", 1, true) ~= nil
 end
 
 -- Stats a seated food gives besides health and mana, read from every line
@@ -40,11 +42,12 @@ local function EatingBuffStats(lines)
     return next(found) and found or nil
 end
 
-local function IsSeatedFood(text)
-    return text:find("must remain seated", 1, true) ~= nil and text:find("while eating", 1, true) ~= nil
+-- Food or drink you sit down for; a buff on a drink counts too (Peace Tea).
+local function IsSeated(text)
+    return text:find("must remain seated", 1, true) ~= nil
 end
 
--- Buff food: anything that gives Well Fed, seated food that raises a stat,
+-- Buff food: anything that gives a buff, seated food that raises a stat,
 -- or an item listed in OVERRIDES.
 local function Classify(itemID, lines)
     local text = stats.Normalise(table.concat(lines, "\n"))
@@ -55,11 +58,11 @@ local function Classify(itemID, lines)
     if wellFed then
         for _, line in ipairs(lines) do
             local lower = stats.Normalise(line)
-            if lower:find("well fed", 1, true) then
+            if IsWellFed(lower) then
                 stats.ParseStats(lower, found)
             end
         end
-    elseif IsSeatedFood(text) then
+    elseif IsSeated(text) then
         found = EatingBuffStats(lines) or found
     end
 
@@ -90,7 +93,7 @@ local function ClassifyPlain(itemID, lines)
     if IsWellFed(text) or not text:find("must remain seated", 1, true) then
         return nil
     end
-    if IsSeatedFood(text) and EatingBuffStats(lines) then
+    if EatingBuffStats(lines) then
         return nil -- buff food, handled by SmartFood
     end
     local health = stats.ParseRestore(text, "health", UnitHealthMax("player"))
@@ -134,7 +137,7 @@ Rummage.RegisterCategory({
     key = "food",
     label = "Buff food",
     macroName = "SmartFood",
-    defaultPriority = { "HASTE", "CRIT", "MASTERY", "VERS", "STAMINA", "SPIRIT", "STRENGTH", "AGILITY", "INTELLECT", "AP", "SP" },
+    defaultPriority = { "HASTE", "CRIT", "MASTERY", "VERS", "STAMINA", "SPIRIT", "STRENGTH", "AGILITY", "INTELLECT", "AP", "SP", "HEALING" },
     statAliases = stats.aliases,
     statLabels = stats.labels,
     Prefilter = Prefilter,
